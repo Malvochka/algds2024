@@ -1,0 +1,75 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "gtest/gtest.h"
+
+int count_paths(int N, int K) {
+    int dp[N+1];
+    dp[0] = 1;
+
+    for (int i = 1; i <= N; i++) {
+        dp[i] = 0;
+        for (int j = 1; j <= K; j++) {
+            if (i - j >= 0) {
+                dp[i] += dp[i - j];
+            }
+        }
+    }
+
+    return dp[N];
+}
+
+void CountingTheWays(int* result, int n, int k) {
+    result[0] = 1;
+    for (int i = 1; i < n + 1; i++) {
+        result[i] = 0;
+    }
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= k; j++) {
+            if (i - j >= 0) {
+                result[i] += result[i - j];
+            }
+        }
+    }
+}
+
+TEST(CountingTheWaysTest, CountingTheWays_n3k2_3Returned) {
+    int n = 3, k = 2;
+    int* result = (int*)malloc(sizeof(int) * (n + 1));
+    int expected = 3;
+
+    CountingTheWays(result, n, k);
+    int actual = result[n];
+
+    ASSERT_EQ(expected, actual);
+    free(result);
+}
+
+TEST(CountingTheWaysTest, CountingTheWays_n3k100_4Returned) {
+    int n = 3, k = 100;
+    int* result = (int*)malloc(sizeof(int) * (n + 1));
+    int expected = 4;
+
+    CountingTheWays(result, n, k);
+    int actual = result[n];
+
+    ASSERT_EQ(expected, actual);
+    free(result);
+}
+
+TEST(CountingTheWaysTest, CountingTheWays_n3k1_1Returned) {
+    int n = 3, k = 1;
+    int* result = (int*)malloc(sizeof(int) * (n + 1));
+    int expected = 1;
+
+    CountingTheWays(result, n, k);
+    int actual = result[n];
+
+    ASSERT_EQ(expected, actual);
+    free(result);
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
