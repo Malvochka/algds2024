@@ -1,0 +1,241 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Структура для узла дерева
+struct Node {
+    int data;
+    struct Node* left;
+    struct Node* right;
+    int height;
+};
+
+// Функция для создания нового узла
+struct Node* newNode(int key) {
+    struct Node* node = (struct Node*)malloc(sizeof(struct Node));
+    node->data = key;
+    node->left = NULL;
+    node->right = NULL;
+    node->height = 1;
+    return (node);
+}
+
+// Функция для получения высоты узла
+int height(struct Node* node) {
+    if (node == NULL)
+        return 0;
+    return node->height;
+}
+
+// Функция для получения максимума из двух целых чисел
+int max(int a, int b) {
+    return (a > b) ? a : b;
+}
+
+// Функция для выполнения правого поворота поддерева с корнем y
+struct Node* rightRotate(struct Node* y) {
+    struct Node* x = y->left;
+    struct Node* T2 = x->right;
+
+    // Выполнение поворота
+    x->right = y;
+    y->left = T2;
+
+    // Обновление высоты узлов
+    y->height = max(height(y->left), height(y->right)) + 1;
+    x->height = max(height(x->left), height(x->right)) + 1;
+
+    // Возвращение нового корня
+    return x;
+}
+
+// Функция для выполнения левого поворота поддерева с корнем x
+struct Node* leftRotate(struct Node* x) {
+    struct Node* y = x->right;
+    struct Node* T2 = y->left;
+
+    // Выполнение поворота
+    y->left = x;
+    x->right = T2;
+
+    // Обновление высоты узлов
+    x->height = max(height(x->left), height(x->right)) + 1;
+    y->height = max(height(y->left), height(y->right)) + 1;
+
+    // Возвращение нового корня
+    return y;
+}
+
+// Получить балансовый фактор узла
+int getBalance(struct Node* node) {
+    if (node == NULL)
+        return 0;
+    return height(node->left) - height(node->right);
+}
+
+// Вставить новый узел в АВЛ дерево
+struct Node* insert(struct Node* node, int key) {
+    // 1. Выполнить стандартное BST вставку
+    if (node == NULL)
+        return (newNode(key));
+
+    if (key < node->data)
+        node->left = insert(node->left, key);
+    else if (key > node->data)
+        node->right = insert(node->right, key);
+    else // Дубликаты ключей не разрешены
+        return node;
+
+    // 2. Обновить высоту текущего узла
+    node->height = 1 + max(height(node->left), height(node->right));
+
+    // 3. Получить балансовый фактор этого узла
+    int balance = getBalance(node);
+
+    // Если узел не сбалансирован, то есть, у него есть дети
+    // на расстоянии более чем 1 уровень друг от друга
+    // рассмотрим 4 случаев
+
+    // Левый левый случай
+    if (balance > 1 && key < node->left->data)
+        return rightRotate(node);
+
+    // Правый правый случай
+    if (balance < -1 && key > node->right->data)
+        return leftRotate(node);
+
+    // Левый правый случай
+    if (balance > 1 && key > node->left->data) {
+        node->left = leftRotate(node->left);
+        return rightRotate(node);
+    }
+
+    // Правый левый случай
+    if (balance < -1 && key < node->right->data) {
+        node->right = rightRotate(node->right);
+        return leftRotate(node);
+    }
+
+    // Если узел сбалансирован, просто вернем его
+    return node;
+}
+
+// Функция для поиска узла с минимальным значением ключа в дереве
+struct Node* minValueNode(struct Node* node) {
+    struct Node* current = node;
+
+    // Проход вниз по левому поддереву для поиска минимального узла
+    while (current->left != NULL)
+        current = current->left;
+
+    return current;
+}
+
+// Функция для удаления узла с заданным значением ключа из дерева
+struct Node* deleteNode(struct Node* root, int key) {
+    // 1. Выполнить стандартное удаление BST
+    if (root == NULL)
+        return root;
+
+    // Если ключ меньше значения корневого узла, идем влево
+    if (key < root->data)
+        root->left = deleteNode(root->left, key);
+
+    // Если ключ больше значения корневого узла, идем вправо
+    else if (key > root->data)
+        root->right = deleteNode(root->right, key);
+
+    // Если ключ совпадает с корневым узлом, это узел, который нужно удалить
+    else {
+        // У узла только один или ни одного дочернего узла
+        if ((root->left == NULL) || (root->right == NULL)) {
+            struct Node* temp = root->left ? root->left : root->right;
+
+            // Узел без детей
+            if (temp == NULL) {
+                temp = root;
+                root = NULL;
+            } else // Узел с одним ребенком
+                *root = *temp; // Копируем содержимое ребенка в этот узел
+
+            free(temp);
+        } else {
+            // Узел с двумя детьми: получить наименьший узел в правом поддереве
+            struct Node* temp = minValueNode(root->right);
+
+            // Копируем данные наименьшего узла в текущий узел
+            root->data = temp->data;
+
+            // Удаляем наименьший узел в правом поддереве
+            root->right = deleteNode(root->right, temp->data);
+        }
+    }
+
+    // Если дерево состояло только из одного узла, вернуть NULL
+    if (root == NULL)
+        return root;
+
+    // 2. Обновить высоту текущего узла
+    root->height = 1 + max(height(root->left), height(root->right));
+
+    // 3. Получить баланс этого узла, чтобы проверить, стало ли дерево несбалансированным
+    int balance = getBalance(root);
+
+    // Если узел не сбалансирован, рассмотрим 4 случая
+
+    // Левый левый случай
+    if (balance > 1 && getBalance(root->left) >= 0)
+        return rightRotate(root);
+
+    // Левый правый случай
+    if (balance > 1 && getBalance(root->left) < 0) {
+        root->left = leftRotate(root->left);
+        return rightRotate(root);
+    }
+
+    // Правый правый случай
+    if (balance < -1 && getBalance(root->right) <= 0)
+        return leftRotate(root);
+
+    // Правый левый случай
+    if (balance < -1 && getBalance(root->right) > 0) {
+        root->right = rightRotate(root->right);
+        return leftRotate(root);
+    }
+
+    return root;
+}
+
+// Функция для вывода узлов в инфиксном порядке
+void inorder(struct Node* root) {
+    if (root != NULL) {
+        inorder(root->left);
+        printf("%d ", root->data);
+        inorder(root->right);
+    }
+}
+
+// Тестовая функция
+int main() {
+    struct Node* root = NULL;
+
+    // Вставляем элементы
+    root = insert(root, 10);
+    root = insert(root, 20);
+    root = insert(root, 30);
+    root = insert(root, 40);
+    root = insert(root, 50);
+    root = insert(root, 25);
+
+    printf("Inorder traversal of the constructed AVL tree is \n");
+    inorder(root);
+    printf("\n");
+
+    // Удаляем узел
+    root = deleteNode(root, 30);
+
+    printf("Inorder traversal after deletion of 30 \n");
+    inorder(root);
+    printf("\n");
+
+    return 0;
+}
