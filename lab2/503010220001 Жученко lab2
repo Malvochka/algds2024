@@ -16,7 +16,7 @@ struct Node* newNode(int key) {
     node->left = NULL;
     node->right = NULL;
     node->height = 1;
-    return (node);
+    return node;
 }
 
 // Функция для получения высоты узла
@@ -76,7 +76,7 @@ int getBalance(struct Node* node) {
 struct Node* insert(struct Node* node, int key) {
     // 1. Выполнить стандартное BST вставку
     if (node == NULL)
-        return (newNode(key));
+        return newNode(key);
 
     if (key < node->data)
         node->left = insert(node->left, key);
@@ -214,28 +214,84 @@ void inorder(struct Node* root) {
     }
 }
 
-// Тестовая функция
-int main() {
-    struct Node* root = NULL;
+// Макрос для проверки равенства значений
+#define ASSERT_EQ(result, test) { \
+    if ((result) == (test)) { \
+        printf("Test successful!\n"); \
+    } else { \
+        printf("Test unsuccessful!\n"); \
+    } \
+}
 
-    // Вставляем элементы
+// Тестовые функции
+void TestInsertNode() {
+    printf("TestInsertNode: ");
+    struct Node* root = NULL;
     root = insert(root, 10);
     root = insert(root, 20);
     root = insert(root, 30);
     root = insert(root, 40);
     root = insert(root, 50);
     root = insert(root, 25);
+    ASSERT_EQ(root->height, 3);
+}
 
-    printf("Inorder traversal of the constructed AVL tree is \n");
-    inorder(root);
-    printf("\n");
+void TestDeleteNode() {
+    printf("TestDeleteNode: ");
+    struct Node* root = NULL;
+    root = insert(root, 10);
+    root = insert(root, 20);
+    root = insert(root, 30);
+    root = insert(root, 40);
+    root = insert(root, 50);
+    root = insert(root, 25);
+    root = deleteNode(root, 20);
+    ASSERT_EQ(root->height, 3);
+}
 
-    // Удаляем узел
+void TestComplexInsertDelete() {
+    printf("TestComplexInsertDelete: ");
+    struct Node* root = NULL;
+    root = insert(root, 10);
+    root = insert(root, 20);
+    root = insert(root, 30);
+    root = insert(root, 40);
+    root = insert(root, 50);
+    root = insert(root, 25);
+    root = insert(root, 5);
+    root = insert(root, 35);
+    root = insert(root, 45);
+    root = insert(root, 55);
     root = deleteNode(root, 30);
+    root = deleteNode(root, 40);
+    ASSERT_EQ(root->height, 4);
+}
 
-    printf("Inorder traversal after deletion of 30 \n");
-    inorder(root);
-    printf("\n");
+void TestMinValueNode() {
+    printf("TestMinValueNode: ");
+    struct Node* root = NULL;
+    root = insert(root, 10);
+    root = insert(root, 20);
+    root = insert(root, 30);
+    root = insert(root, 40);
+    root = insert(root, 50);
+    root = insert(root, 25);
+    struct Node* minNode = minValueNode(root);
+    ASSERT_EQ(minNode->data, 10);
+}
 
+int main() {
+    // Тестирование вставки узлов
+    TestInsertNode();
+    
+    // Тестирование удаления узлов
+    TestDeleteNode();
+    
+    // Тестирование сложных вставок и удалений узлов
+    TestComplexInsertDelete();
+    
+    // Тестирование нахождения узла с минимальным значением
+    TestMinValueNode();
+    
     return 0;
 }
